@@ -36,15 +36,3 @@ SwiftUI -> Relux SideEffect -> Relux Saga -> AuthService (app)
 
 The app owns token persistence, state transitions, refresh timing, anonymous-to-real orchestration,
 and any backend sync.
-
-## Demo
-
-The scenario stand lives at:
-
-```text
-~/Developer/ReluxWorks/apps/firebase-auth-demo
-```
-
-It builds as an iOS 18 SwiftUI app and exercises configuration diagnostics, anonymous auth,
-email/password, email linking, token refresh, email verification, social screens when configured,
-and a disabled phone tab.
