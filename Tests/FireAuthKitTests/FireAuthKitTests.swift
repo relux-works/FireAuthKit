@@ -121,7 +121,7 @@ struct FireAuthKitTests {
     }
 
     @Test
-    func anonymousIdpUpgradeFallsBackWhenFederatedLinkErrorIsHTTP400() async throws {
+    func linkAnonymousOrSignInExistingWithIdpFallsBackWhenFederatedLinkErrorIsHTTP400() async throws {
         let transport = QueueTransport([
             .init(
                 statusCode: 400,
@@ -147,7 +147,7 @@ struct FireAuthKitTests {
         ])
         let client = FirebaseAuthClient(apiKey: "test-key", transport: transport)
 
-        let response = try await client.signInWithIdpFromAnonymous(
+        let response = try await client.linkAnonymousOrSignInExistingWithIdp(
             anonymousIdToken: "anonymous-id-token",
             credential: .google(accessToken: "google-token")
         )

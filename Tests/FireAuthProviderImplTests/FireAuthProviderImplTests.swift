@@ -73,19 +73,141 @@ struct FireAuthProviderImplTests {
         #expect(refreshed.idToken == "id-2")
         #expect(requests.last?.url?.host == "securetoken.googleapis.com")
     }
+
+    @Test
+    func linkEmailPasswordDoesNotFallbackWhenEmailAlreadyExists() async throws {
+        let transport = QueueTransport([
+            """
+            {
+              "idToken": "anonymous-id-token",
+              "refreshToken": "refresh",
+              "expiresIn": "3600",
+              "localId": "anonymous-user"
+            }
+            """,
+            .init(
+                statusCode: 400,
+                response: """
+                {
+                  "error": {
+                    "code": 400,
+                    "message": "EMAIL_EXISTS"
+                  }
+                }
+                """
+            ),
+            """
+            {
+              "idToken": "should-not-be-used",
+              "refreshToken": "refresh-2",
+              "expiresIn": "3600",
+              "localId": "existing-user"
+            }
+            """,
+        ])
+        let provider = FireAuthProvider.Module.Impl(
+            configuration: .init(status: .configured(.init(firebaseAPIKey: "key"))),
+            transport: transport
+        )
+
+        _ = try await provider.signInAnonymously()
+
+        do {
+            _ = try await provider.linkEmailPassword(email: "used@example.com", password: "Password1!")
+            Issue.record("Expected strict link to throw EMAIL_EXISTS")
+        } catch FirebaseAuthError.emailAlreadyInUse {}
+
+        let requests = await transport.requests
+        #expect(requests.count == 2)
+        #expect(requests[1].url?.path == "/v1/accounts:signUp")
+        let body = try jsonBody(from: requests[1])
+        #expect(body["idToken"] as? String == "anonymous-id-token")
+    }
+
+    @Test
+    func linkCurrentUserWithCredentialDoesNotFallbackWhenProviderAlreadyLinked() async throws {
+        let transport = QueueTransport([
+            """
+            {
+              "idToken": "anonymous-id-token",
+              "refreshToken": "refresh",
+              "expiresIn": "3600",
+              "localId": "anonymous-user"
+            }
+            """,
+            .init(
+                statusCode: 400,
+                response: """
+                {
+                  "error": {
+                    "code": 400,
+                    "message": "FEDERATED_USER_ID_ALREADY_LINKED"
+                  }
+                }
+                """
+            ),
+            """
+            {
+              "idToken": "should-not-be-used",
+              "refreshToken": "refresh-2",
+              "expiresIn": "3600",
+              "localId": "existing-user"
+            }
+            """,
+        ])
+        let provider = FireAuthProvider.Module.Impl(
+            configuration: .init(status: .configured(.init(firebaseAPIKey: "key"))),
+            transport: transport
+        )
+
+        _ = try await provider.signInAnonymously()
+
+        do {
+            _ = try await provider.linkCurrentUser(with: .google(accessToken: "google-token"))
+            Issue.record("Expected strict link to throw FEDERATED_USER_ID_ALREADY_LINKED")
+        } catch FirebaseAuthError.federatedUserIdAlreadyLinked {}
+
+        let requests = await transport.requests
+        #expect(requests.count == 2)
+        #expect(requests[1].url?.path == "/v1/accounts:signInWithIdp")
+        let body = try jsonBody(from: requests[1])
+        #expect(body["idToken"] as? String == "anonymous-id-token")
+    }
+}
+
+private struct TransportStub: ExpressibleByStringLiteral, Sendable {
+    let statusCode: Int
+    let response: String
+
+    init(statusCode: Int = 200, response: String) {
+        self.statusCode = statusCode
+        self.response = response
+    }
+
+    init(stringLiteral value: String) {
+        self.init(response: value)
+    }
 }
 
 private actor QueueTransport: FirebaseAuthTransport {
     private(set) var requests: [URLRequest] = []
-    private var responses: [String]
+    private var responses: [TransportStub]
 
-    init(_ responses: [String]) {
+    init(_ responses: [TransportStub]) {
         self.responses = responses
     }
 
     func data(for request: URLRequest) async throws -> FirebaseAuthTransportResponse {
         requests.append(request)
-        let response = responses.isEmpty ? "{}" : responses.removeFirst()
-        return FirebaseAuthTransportResponse(data: Data(response.utf8), statusCode: 200)
+        let response = responses.isEmpty ? .init(response: "{}") : responses.removeFirst()
+        return FirebaseAuthTransportResponse(
+            data: Data(response.response.utf8),
+            statusCode: response.statusCode
+        )
     }
+}
+
+private func jsonBody(from request: URLRequest) throws -> [String: Any] {
+    let body = try #require(request.httpBody)
+    return try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
 }

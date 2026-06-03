@@ -79,7 +79,7 @@ public extension FireAuthProvider.Module {
                 throw FirebaseAuthError.invalidIdToken
             }
 
-            let response = try await requireClient().signInWithEmailFromAnonymous(
+            let response = try await requireClient().linkWithEmailPassword(
                 anonymousIdToken: session.idToken,
                 email: email,
                 password: password
@@ -97,8 +97,8 @@ public extension FireAuthProvider.Module {
                 throw FirebaseAuthError.invalidIdToken
             }
 
-            let response = try await requireClient().signInWithIdpFromAnonymous(
-                anonymousIdToken: session.idToken,
+            let response = try await requireClient().linkWithIdp(
+                idToken: session.idToken,
                 credential: credential
             )
             return store(response)

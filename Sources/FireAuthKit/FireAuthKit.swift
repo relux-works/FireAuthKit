@@ -471,6 +471,30 @@ public protocol FirebaseAuthClientProtocol: Actor {
     func confirmEmailVerification(oobCode: String) async throws -> FirebaseTokenResponse
 }
 
+public extension FirebaseAuthClientProtocol {
+    func linkAnonymousOrSignInExistingWithIdp(
+        anonymousIdToken: String,
+        credential: FirebaseIDPCredential
+    ) async throws -> FirebaseTokenResponse {
+        try await signInWithIdpFromAnonymous(
+            anonymousIdToken: anonymousIdToken,
+            credential: credential
+        )
+    }
+
+    func linkAnonymousOrSignInExistingWithEmail(
+        anonymousIdToken: String,
+        email: String,
+        password: String
+    ) async throws -> FirebaseTokenResponse {
+        try await signInWithEmailFromAnonymous(
+            anonymousIdToken: anonymousIdToken,
+            email: email,
+            password: password
+        )
+    }
+}
+
 public actor FirebaseAuthClient: FirebaseAuthClientProtocol {
     private var config: FirebaseAuthConfig?
     private let transport: any FirebaseAuthTransport
@@ -594,7 +618,7 @@ public actor FirebaseAuthClient: FirebaseAuthClientProtocol {
         try await signInWithIdpResponse(postBody: postBody, idToken: idToken).tokenResponse()
     }
 
-    public func signInWithIdpFromAnonymous(
+    public func linkAnonymousOrSignInExistingWithIdp(
         anonymousIdToken: String,
         credential: FirebaseIDPCredential
     ) async throws -> FirebaseTokenResponse {
@@ -603,6 +627,22 @@ public actor FirebaseAuthClient: FirebaseAuthClientProtocol {
         } catch FirebaseAuthError.federatedUserIdAlreadyLinked {
             return try await signInWithIdp(credential)
         }
+    }
+
+    @available(
+        *,
+        deprecated,
+        renamed: "linkAnonymousOrSignInExistingWithIdp(anonymousIdToken:credential:)",
+        message: "This method may switch Firebase uid. Use strict linkWithIdp unless your app has an explicit account merge flow."
+    )
+    public func signInWithIdpFromAnonymous(
+        anonymousIdToken: String,
+        credential: FirebaseIDPCredential
+    ) async throws -> FirebaseTokenResponse {
+        try await linkAnonymousOrSignInExistingWithIdp(
+            anonymousIdToken: anonymousIdToken,
+            credential: credential
+        )
     }
 
     public func getFirebaseToken(googleAccessToken: String) async throws -> FirebaseTokenResponse {
@@ -690,48 +730,114 @@ public actor FirebaseAuthClient: FirebaseAuthClientProtocol {
         )
     }
 
-    public func signInWithGoogleFromAnonymous(
+    public func linkAnonymousOrSignInExistingWithGoogle(
         anonymousIdToken: String,
         googleAccessToken: String
     ) async throws -> FirebaseTokenResponse {
-        try await signInWithIdpFromAnonymous(
+        try await linkAnonymousOrSignInExistingWithIdp(
             anonymousIdToken: anonymousIdToken,
             credential: .google(accessToken: googleAccessToken)
         )
     }
 
-    public func signInWithFacebookFromAnonymous(
+    @available(
+        *,
+        deprecated,
+        renamed: "linkAnonymousOrSignInExistingWithGoogle(anonymousIdToken:googleAccessToken:)",
+        message: "This method may switch Firebase uid. Use strict linkWithGoogle unless your app has an explicit account merge flow."
+    )
+    public func signInWithGoogleFromAnonymous(
+        anonymousIdToken: String,
+        googleAccessToken: String
+    ) async throws -> FirebaseTokenResponse {
+        try await linkAnonymousOrSignInExistingWithGoogle(
+            anonymousIdToken: anonymousIdToken,
+            googleAccessToken: googleAccessToken
+        )
+    }
+
+    public func linkAnonymousOrSignInExistingWithFacebook(
         anonymousIdToken: String,
         facebookAccessToken: String
     ) async throws -> FirebaseTokenResponse {
-        try await signInWithIdpFromAnonymous(
+        try await linkAnonymousOrSignInExistingWithIdp(
             anonymousIdToken: anonymousIdToken,
             credential: .facebook(accessToken: facebookAccessToken)
         )
     }
 
-    public func signInWithAppleFromAnonymous(
+    @available(
+        *,
+        deprecated,
+        renamed: "linkAnonymousOrSignInExistingWithFacebook(anonymousIdToken:facebookAccessToken:)",
+        message: "This method may switch Firebase uid. Use strict linkWithFacebook unless your app has an explicit account merge flow."
+    )
+    public func signInWithFacebookFromAnonymous(
+        anonymousIdToken: String,
+        facebookAccessToken: String
+    ) async throws -> FirebaseTokenResponse {
+        try await linkAnonymousOrSignInExistingWithFacebook(
+            anonymousIdToken: anonymousIdToken,
+            facebookAccessToken: facebookAccessToken
+        )
+    }
+
+    public func linkAnonymousOrSignInExistingWithApple(
         anonymousIdToken: String,
         appleIdToken: String,
         nonce: String
     ) async throws -> FirebaseTokenResponse {
-        try await signInWithIdpFromAnonymous(
+        try await linkAnonymousOrSignInExistingWithIdp(
             anonymousIdToken: anonymousIdToken,
             credential: .apple(idToken: appleIdToken, nonce: nonce)
         )
     }
 
-    public func signInWithTwitterFromAnonymous(
+    @available(
+        *,
+        deprecated,
+        renamed: "linkAnonymousOrSignInExistingWithApple(anonymousIdToken:appleIdToken:nonce:)",
+        message: "This method may switch Firebase uid. Use strict linkWithApple unless your app has an explicit account merge flow."
+    )
+    public func signInWithAppleFromAnonymous(
+        anonymousIdToken: String,
+        appleIdToken: String,
+        nonce: String
+    ) async throws -> FirebaseTokenResponse {
+        try await linkAnonymousOrSignInExistingWithApple(
+            anonymousIdToken: anonymousIdToken,
+            appleIdToken: appleIdToken,
+            nonce: nonce
+        )
+    }
+
+    public func linkAnonymousOrSignInExistingWithTwitter(
         anonymousIdToken: String,
         twitterAccessToken: String
     ) async throws -> FirebaseTokenResponse {
-        try await signInWithIdpFromAnonymous(
+        try await linkAnonymousOrSignInExistingWithIdp(
             anonymousIdToken: anonymousIdToken,
             credential: .twitter(accessToken: twitterAccessToken)
         )
     }
 
-    public func signInWithEmailFromAnonymous(
+    @available(
+        *,
+        deprecated,
+        renamed: "linkAnonymousOrSignInExistingWithTwitter(anonymousIdToken:twitterAccessToken:)",
+        message: "This method may switch Firebase uid. Use strict linkWithTwitter unless your app has an explicit account merge flow."
+    )
+    public func signInWithTwitterFromAnonymous(
+        anonymousIdToken: String,
+        twitterAccessToken: String
+    ) async throws -> FirebaseTokenResponse {
+        try await linkAnonymousOrSignInExistingWithTwitter(
+            anonymousIdToken: anonymousIdToken,
+            twitterAccessToken: twitterAccessToken
+        )
+    }
+
+    public func linkAnonymousOrSignInExistingWithEmail(
         anonymousIdToken: String,
         email: String,
         password: String
@@ -745,6 +851,24 @@ public actor FirebaseAuthClient: FirebaseAuthClientProtocol {
         } catch FirebaseAuthError.emailAlreadyInUse {
             return try await signInWithEmailPassword(email: email, password: password)
         }
+    }
+
+    @available(
+        *,
+        deprecated,
+        renamed: "linkAnonymousOrSignInExistingWithEmail(anonymousIdToken:email:password:)",
+        message: "This method may switch Firebase uid. Use strict linkWithEmailPassword unless your app has an explicit account merge flow."
+    )
+    public func signInWithEmailFromAnonymous(
+        anonymousIdToken: String,
+        email: String,
+        password: String
+    ) async throws -> FirebaseTokenResponse {
+        try await linkAnonymousOrSignInExistingWithEmail(
+            anonymousIdToken: anonymousIdToken,
+            email: email,
+            password: password
+        )
     }
 
     public func refreshIdToken(refreshToken: String) async throws -> FirebaseTokenResponse {

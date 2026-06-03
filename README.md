@@ -18,6 +18,20 @@ and email verification.
 This package deliberately does not include a backend bridge, profile sync, Keychain persistence, or
 Relux state/service/fetcher code. Apps own token storage and app-specific sync.
 
+## Linking vs. account switch
+
+Use the strict `linkWith*` APIs when attaching email/password or a provider to the current Firebase
+user. If the email/provider already belongs to another Firebase user, strict link throws and the
+current uid is preserved.
+
+Use `linkAnonymousOrSignInExistingWith*` only for an explicit merge/sign-in flow. These methods first
+try to link the anonymous user in place, but on conflict they sign into the existing Firebase account,
+which can change the uid. That is dangerous for apps that key local data, backend data, or
+subscriptions by Firebase uid unless they have a dedicated merge policy.
+
+The older `signInWith*FromAnonymous` names are deprecated compatibility aliases for
+`linkAnonymousOrSignInExistingWith*`.
+
 ## Configuration
 
 `FireAuthProvider.Configuration.load(bundle:)` reads Firebase configuration from either app Info.plist
