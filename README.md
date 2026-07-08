@@ -4,10 +4,10 @@ Firebase Authentication for Apple platforms over the public REST API, without th
 
 ## Products
 
-- `FireAuthKit` — Foundation-only Firebase Auth REST client.
-- `FireAuthKitSocial` — Apple/Google/Facebook/Twitter OAuth credential acquisition. Firebase exchange still happens in `FireAuthKit`.
-- `FireAuthProvider` — SDK-neutral provider interface for feature modules.
-- `FireAuthProviderImpl` — in-memory provider implementation over `FireAuthKit` and `FireAuthKitSocial`.
+- `FireAuthKit`: Foundation-only Firebase Auth REST client.
+- `FireAuthKitSocial`: Apple/Google/Facebook/Twitter OAuth credential acquisition. Firebase exchange still happens in `FireAuthKit`.
+- `FireAuthProvider`: SDK-neutral provider interface for feature modules.
+- `FireAuthProviderImpl`: in-memory provider implementation over `FireAuthKit` and `FireAuthKitSocial`.
 
 ## Scope
 
